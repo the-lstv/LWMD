@@ -1,4 +1,8 @@
 # LWMD
+
+> [!CAUTION]
+> This library is not complete and in early alpha. As of now, only headings (#) and horizontal rules (---) are fully implemented. Other parts are being implemented over time.
+
 The first of it's kind Light-Weight MarkDown to HTML/DOM parser with full streaming support.
 
 It is a no-dependency, single file JavaScript library that allows you to parse Markdown and render it directly to DOM in real time, as it is being received.
@@ -14,7 +18,7 @@ One useful application of this is AI response streaming, where you can efficient
 - **Fast**: Optimized for performance.
 - **Customizable**: Tailor the parser to fit your needs.
 
-WebWorkers are not supported and will not be supported, as it does not make sense to use them for this kind of task - using a WebWorker would nearly double the overhead and make the parsing to DOM slower and less efficient. WebWorker !== magic performance enhancer.
+<!-- WebWorkers are not supported and will not be supported, as it does not make sense to use them for this kind of task - using a WebWorker would nearly double the overhead and make the parsing to DOM slower and less efficient. WebWorker !== magic performance enhancer. -->
 
 # Usage
 The API designed to be as simple as possible. To get started, you simply import the library and you can start parsing right away.
