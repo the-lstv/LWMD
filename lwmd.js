@@ -1,4 +1,4 @@
-const ENUM = {
+const LWMD_ENUM = {
     CHAR: {
         SPACE: 32,
         NEWLINE: 10,
@@ -18,6 +18,8 @@ const ENUM = {
         SEQUENCE_HEADING: 1,
         SEQUENCE_HR: 2,
         SEQUENCE_MODIFIER: 3,
+        CODE: 4,
+        CODE_BLOCK: 5,
     }
 }
 
@@ -76,7 +78,7 @@ class LWMD {
             // Locked state, prevents flushing in an incomplete state
             locked: false,
 
-            state: ENUM.STATE.NORMAL,
+            state: LWMD_ENUM.STATE.NORMAL,
             line_start: true,
 
             heading_count: 0,
@@ -86,6 +88,11 @@ class LWMD {
             
             modifierStack: [] // [[char, count, ], ...]
         }
+    }
+
+    reset(target) {
+        this.target = target || document.createElement("div");
+        this.clearState();
     }
 
     /**
@@ -113,7 +120,7 @@ class LWMD {
     }
 
     static isModifierChar(char) {
-        return char === ENUM.CHAR.ASTERISK || char === ENUM.CHAR.UNDERSCORE || char === ENUM.CHAR.TILDE;
+        return char === LWMD_ENUM.CHAR.ASTERISK || char === LWMD_ENUM.CHAR.UNDERSCORE || char === LWMD_ENUM.CHAR.TILDE;
     }
 
     write(chunk) {
@@ -132,24 +139,24 @@ class LWMD {
             let char = chunk.charCodeAt(i);
 
             switch(this.state.state) {
-                case ENUM.STATE.NORMAL:
+                case LWMD_ENUM.STATE.NORMAL:
                     if(this.state.line_start) {
-                        if(char === ENUM.CHAR.HASH){
+                        if(char === LWMD_ENUM.CHAR.HASH){
                             this.flush();
 
                             this.state.locked = true;
     
-                            this.state.state = ENUM.STATE.SEQUENCE_HEADING;
+                            this.state.state = LWMD_ENUM.STATE.SEQUENCE_HEADING;
                             this.state.heading_count = 1;
                             this.uncorfinmed_start = this.position;
                         }
 
-                        else if(char === ENUM.CHAR.UNDERSCORE || char === ENUM.CHAR.ASTERISK || char === ENUM.CHAR.DASH) {
+                        else if(char === LWMD_ENUM.CHAR.UNDERSCORE || char === LWMD_ENUM.CHAR.ASTERISK || char === LWMD_ENUM.CHAR.DASH) {
                             this.flush();
 
                             this.state.locked = true;
     
-                            this.state.state = ENUM.STATE.SEQUENCE_HR;
+                            this.state.state = LWMD_ENUM.STATE.SEQUENCE_HR;
                             this.state.hr_char = char;
                             this.state.hr_count = 1;
                             this.uncorfinmed_start = this.position;
@@ -160,27 +167,32 @@ class LWMD {
                         // this.state.locked = true;
                         // this.state.modifierStack.length = 0;
 
-                        this.state.state = ENUM.STATE.SEQUENCE_MODIFIER;
+                        this.state.state = LWMD_ENUM.STATE.SEQUENCE_MODIFIER;
                         this.state.modifierStack.push([char, 1]);
+                        this.uncorfinmed_start = this.position + 1;
+                    } else if(char === LWMD_ENUM.CHAR.BACKTICK) {
+                        this.flush();
+
+                        this.state.state = LWMD_ENUM.STATE.CODE;
                         this.uncorfinmed_start = this.position + 1;
                     }
                     break;
 
-                case ENUM.STATE.SEQUENCE_HR:
-                    if(char === this.state.hr_char || char === ENUM.CHAR.SPACE) {
+                case LWMD_ENUM.STATE.SEQUENCE_HR:
+                    if(char === this.state.hr_char || char === LWMD_ENUM.CHAR.SPACE) {
                         this.state.hr_count ++;
                     } else {
-                        this.state.state = ENUM.STATE.NORMAL;
+                        this.state.state = LWMD_ENUM.STATE.NORMAL;
 
                         this.state.locked = false;
 
-                        if(this.state.hr_count > 2 && char === ENUM.CHAR.NEWLINE) {
+                        if(this.state.hr_count > 2 && char === LWMD_ENUM.CHAR.NEWLINE) {
                             this.top.append(document.createElement("hr"));
                             this.start = this.position;
                         } else {
                             if(LWMD.isModifierChar(this.state.hr_char)) {
                                 this.flush();
-                                this.state.state = ENUM.STATE.SEQUENCE_MODIFIER;
+                                this.state.state = LWMD_ENUM.STATE.SEQUENCE_MODIFIER;
                                 this.state.modifierStack.push([this.state.hr_char, this.state.hr_count]);
                                 this.uncorfinmed_start = this.position + 1;
                             }
@@ -191,16 +203,16 @@ class LWMD {
                     }
                     break;
 
-                case ENUM.STATE.SEQUENCE_HEADING:
-                    if(char === ENUM.CHAR.HASH){
+                case LWMD_ENUM.STATE.SEQUENCE_HEADING:
+                    if(char === LWMD_ENUM.CHAR.HASH){
                         this.state.heading_count ++;
                         this.uncorfinmed_start ++;
                     } else {
-                        this.state.state = ENUM.STATE.NORMAL;
+                        this.state.state = LWMD_ENUM.STATE.NORMAL;
 
                         this.state.locked = false;
 
-                        if(char === ENUM.CHAR.SPACE || char === ENUM.CHAR.NEWLINE) {
+                        if(char === LWMD_ENUM.CHAR.SPACE || char === LWMD_ENUM.CHAR.NEWLINE) {
                             this.uncorfinmed_start += 2;
                             this.up(`h${Math.min(6, this.state.heading_count)}`);
                             this.start = this.uncorfinmed_start;
@@ -212,7 +224,7 @@ class LWMD {
                     }
                     break;
 
-                case ENUM.STATE.SEQUENCE_MODIFIER:
+                case LWMD_ENUM.STATE.SEQUENCE_MODIFIER:
                     // By default, modifiers should be treated as text, until they are matched.
 
                     if (LWMD.isModifierChar(char)) {
@@ -240,7 +252,7 @@ class LWMD {
                         }
 
                     } else {
-                        this.state.state = ENUM.STATE.NORMAL;
+                        this.state.state = LWMD_ENUM.STATE.NORMAL;
 
                         this.state.locked = false;
 
@@ -248,7 +260,7 @@ class LWMD {
                     }
             }
 
-            if(char === ENUM.CHAR.NEWLINE) {
+            if(char === LWMD_ENUM.CHAR.NEWLINE) {
                 this.state.line_start = true;
 
                 // Clear unresolved modifiers at the end of the line

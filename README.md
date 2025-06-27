@@ -10,9 +10,9 @@ One useful application of this is AI response streaming, where you can efficient
 
 # Features
 - **Streaming**: Parse and render Markdown as it is being read.
-- **Lightweight**: No dependencies, single file, no bloat. Only 4.75KB minified.
+- **Lightweight**: No dependencies, single file, no bloat. Only 2.2kB minified and gzipped!
 - **Fast**: Optimized for performance.
-- Customizable.
+- **Customizable**: Tailor the parser to fit your needs.
 
 WebWorkers are not supported and will not be supported, as it does not make sense to use them for this kind of task - using a WebWorker would nearly double the overhead and make the parsing to DOM slower and less efficient. WebWorker !== magic performance enhancer.
 
