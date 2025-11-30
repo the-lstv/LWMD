@@ -51,9 +51,9 @@ class LWMD {
 
         if(!this.options.emptyInstance) {
             this.target = target || document.createElement("div");
-    
+
             this.clearState();
-    
+
             if(text) {
                 this.write(text);
             }
@@ -374,10 +374,5 @@ class LWMD {
         return new LWMD(null, null, { emptyInstance: true, ...(typeof options === "object"? options: null) || null }).parse(text, target);
     }
 
-    static get decoder() {
-        if(!LWMD._decoder) {
-            LWMD._decoder = new TextDecoder("utf-8");
-        }
-        return LWMD._decoder;
-    }
+    static decoder = new TextDecoder("utf-8");
 }
